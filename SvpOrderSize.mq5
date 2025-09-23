@@ -115,28 +115,28 @@ void Calculate(int i, int row)
      {
 
       double tradeVolume = accountEquity * percentFromCapital / (i * tickValue);
-#ifdef __MQL4__
-      if(Symbol() == "CL_ecn" || Symbol() == "DAX_ecn" || Symbol() == "NSDQ_ecn")
-#endif
-#ifdef __MQL5__
-         if(Symbol() == "BRENT1" || Symbol() == "NGAS1")
-#endif
-           {
-            // Hodnota tickValue je chybne v USD a ne v Kc!!! Chyba, mozna u PurpleTrading!
-
-            // accountEquity - je v Kc.
-            //printf(accountEquity);
-
-            // MODE_TICKVALUE = 1 USD je MODE_TICKSIZE = 0.001 hodnoty CL -  Odpocida, 0.001 CL je 1 USD.
-            //printf(MarketInfo(Symbol(), MODE_TICKVALUE) + ", " + MarketInfo(Symbol(), MODE_TICKSIZE));
-
-            // Treba 24.5 Kc/USD
-            //printf("czechCourse "+ CzechCourse());
-
-            // Pro CL 1000 bodu, jeden bod je za 1 USD * kurz USDCZK...
-            // 500000 * 0.01 / (1000 * 1 * 24.5)
-            tradeVolume = accountEquity * percentFromCapital / (i * tickValue * CzechCourse());
-           }
+//#ifdef __MQL4__
+//      if(Symbol() == "CL_ecn" || Symbol() == "DAX_ecn" || Symbol() == "NSDQ_ecn")
+//#endif
+//#ifdef __MQL5__
+//         if(Symbol() == "BRENT1" || Symbol() == "NGAS1")
+//#endif
+//           {
+//            // Hodnota tickValue je chybne v USD a ne v Kc!!! Chyba, mozna u PurpleTrading!
+//
+//            // accountEquity - je v Kc.
+//            //printf(accountEquity);
+//
+//            // MODE_TICKVALUE = 1 USD je MODE_TICKSIZE = 0.001 hodnoty CL -  Odpocida, 0.001 CL je 1 USD.
+//            //printf(MarketInfo(Symbol(), MODE_TICKVALUE) + ", " + MarketInfo(Symbol(), MODE_TICKSIZE));
+//
+//            // Treba 24.5 Kc/USD
+//            //printf("czechCourse "+ CzechCourse());
+//
+//            // Pro CL 1000 bodu, jeden bod je za 1 USD * kurz USDCZK...
+//            // 500000 * 0.01 / (1000 * 1 * 24.5)
+//            tradeVolume = accountEquity * percentFromCapital / (i * tickValue * CzechCourse());
+//           }
 
 #ifdef __MQL4__
       double accountFreeMargin = AccountFreeMargin();
