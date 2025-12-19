@@ -13,7 +13,6 @@
 //--- vstupní parametry
 input string   InpStartTime = "16:30";    // Čas začátku (15min svíčka)
 input string   InpEndTime   = "22:45";    // Čas ukončení (včetně smazání linií)
-input double   InpRangeKoef = 0.5;        // Koeficient pro StopLoss (pro info)
 input bool     InpBlinkByHue = true;      // Povolit blikání Hue
 
 //--- globální proměnné
@@ -186,10 +185,11 @@ int OnCalculate(const int rates_total,
                double dHigh = ObjectGetDouble(0, highName, OBJPROP_PRICE, 0);
                double dLow  = ObjectGetDouble(0, lowName, OBJPROP_PRICE, 0);
                
-               if(CheckSignalForBar(barTime, startTime, endTime, dHigh, dLow))
+               datetime sigTime = CheckSignalForBar(barTime, startTime, endTime, dHigh, dLow);
+               if(sigTime > 0)
                {
                   // Vytvoříme značku signálu (např. svislou čáru nebo text)
-                  ObjectCreate(0, sigName, OBJ_VLINE, 0, barTime, 0);
+                  ObjectCreate(0, sigName, OBJ_VLINE, 0, sigTime, 0);
                   ObjectSetInteger(0, sigName, OBJPROP_COLOR, clrYellow);
                   ObjectSetInteger(0, sigName, OBJPROP_STYLE, STYLE_DOT);
                   
@@ -208,26 +208,38 @@ int OnCalculate(const int rates_total,
 //+------------------------------------------------------------------+
 //| Kontrola signálu pro konkrétní čas                               |
 //+------------------------------------------------------------------+
-bool CheckSignalForBar(datetime barTime, datetime startTime, datetime endTime, double dHigh, double dLow)
+datetime CheckSignalForBar(datetime barTime, datetime startTime, datetime endTime, double dHigh, double dLow)
 {
-   if(dHigh <= 0) return false;
+   if(dHigh <= 0) return 0;
    
    MqlRates m2[];
    ArraySetAsSeries(m2, true);
-   // Kopírujeme 3 svíčky končící v barTime
-   if(CopyRates(_Symbol, PERIOD_M2, barTime, 3, m2) == 3)
+   // Kopírujeme 4 svíčky, abychom měli jistotu, že najdeme 3 kompletní
+   if(CopyRates(_Symbol, PERIOD_M2, barTime, 4, m2) >= 3)
    {
       bool allAbove = true;
       bool allBelow = true;
-      for(int j=0; j<3; j++)
+      int found = 0;
+      datetime sigTime = 0;
+      
+      for(int j=0; j<ArraySize(m2); j++)
       {
+         // Svíčka je kompletní pouze pokud barTime je alespoň na jejím konci (začátek + 2 minuty)
+         if(barTime < m2[j].time + 120) continue; 
+         
          if(m2[j].close <= dHigh) allAbove = false;
          if(m2[j].close >= dLow)  allBelow = false;
          if(m2[j].time < startTime + 15 * 60) { allAbove = false; allBelow = false; }
+         
+         if(found == 0) sigTime = m2[j].time; // Čas poslední kompletní svíčky
+         
+         found++;
+         if(found == 3) break;
       }
-      return (allAbove || allBelow);
+      
+      if(found == 3 && (allAbove || allBelow)) return sigTime;
    }
-   return false;
+   return 0;
 }
 
 //+------------------------------------------------------------------+
