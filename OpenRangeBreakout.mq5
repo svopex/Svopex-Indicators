@@ -62,7 +62,7 @@ void CallHue()
       string headers = "Content-Type: text/plain; charset=utf-8";
       int HttpOpen = InternetOpenW(" ", 0, " ", "", 0);
       int HttpConnect = InternetConnectW(HttpOpen, "localhost", 80, "", "", 3, 0, 0);
-      int HttpRequest = HttpOpenRequestW(HttpConnect, "POST", "/hue", "", "", "", 0, 0);
+      int HttpRequest = HttpOpenRequestW(HttpConnect, "POST", "/huemax", "", "", "", 0, 0);
       
       bool result = HttpSendRequestW(HttpRequest, headers, StringLen(headers), line, lineSize);
       
