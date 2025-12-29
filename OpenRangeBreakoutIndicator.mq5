@@ -12,7 +12,7 @@
 
 //--- vstupní parametry
 input string   InpStartTime = "16:30";    // Čas začátku (15min svíčka)
-input string   InpEndTime   = "22:45";    // Čas ukončení (včetně smazání linií)
+input string   InpEndTime   = "23:30";    // Čas ukončení (včetně smazání linií)
 input bool     InpBlinkByHue = true;      // Povolit blikání Hue
 
 //--- globální proměnné

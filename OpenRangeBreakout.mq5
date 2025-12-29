@@ -22,7 +22,7 @@
 
 //--- vstupní parametry
 input string   InpStartTime = "16:30";    // Čas začátku (15min svíčka)
-input string   InpEndTime   = "22:45";    // Čas ukončení obchodů (včetně uzavření pozic)
+input string   InpEndTime   = "23:30";    // Čas ukončení obchodů (včetně uzavření pozic)
 input double   InpLotSize   = 0.1;        // Velikost lotu
 input double   InpRangeKoef = 0.85;       // Koeficient pro StopLoss (z velikosti 15min svíčky)
 input bool     InpBlinkByHue = true;      // Povolit blikání Hue
