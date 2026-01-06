@@ -229,7 +229,10 @@ datetime CheckSignalForBar(datetime barTime, datetime startTime, datetime endTim
          
          if(m2[j].close <= dHigh) allAbove = false;
          if(m2[j].close >= dLow)  allBelow = false;
-         if(m2[j].time < startTime + 15 * 60) { allAbove = false; allBelow = false; }
+         
+         // ÚPRAVA: Povolíme i svíčku, která začala v Range, ale končí až po něm (např. 16:44-16:46 u M2)
+         // Původně: if(m2[j].time < startTime + 15 * 60)
+         if(m2[j].time + 120 <= startTime + 15 * 60) { allAbove = false; allBelow = false; }
          
          if(found == 0) sigTime = m2[j].time; // Čas poslední kompletní svíčky
          

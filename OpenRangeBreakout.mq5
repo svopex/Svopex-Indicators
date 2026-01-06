@@ -171,7 +171,8 @@ void OnTick()
                if(m2Rates[i].close >= rangeLow)  allBelow = false;
                
                // Svíčky musí být časově až po referenční 15min svíčce
-               if(m2Rates[i].time < startTime + 15 * 60)
+               // ÚPRAVA: Povolíme i svíčku, která začala v Range, ale končí až po něm
+               if(m2Rates[i].time + 120 <= startTime + 15 * 60)
                {
                   allAbove = false;
                   allBelow = false;
