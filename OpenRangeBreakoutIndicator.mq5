@@ -54,6 +54,8 @@ void CallHue()
       InternetCloseHandle(HttpRequest);
       InternetCloseHandle(HttpConnect);
       InternetCloseHandle(HttpOpen);
+
+      SendNotification("Open Range Breakout!");
    }
 }
 
