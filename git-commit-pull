@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Musime pri stahovani z github pouzivat -personal
+# Adresa: git@github.com-personal:svopex/Svopex-Indicators.git
+
+cd "/Users/petrsvoboda/DataDisk/Zaloha/Trading/Forex/Svopex Indicators/"
+
+git pull
+
+read -p "Stiskni Enter pro pokračování..."
