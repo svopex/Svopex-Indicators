@@ -7,7 +7,7 @@
 //| expert přežije restart experta i celého terminálu.               |
 //+------------------------------------------------------------------+
 #property copyright "pulnocka"
-#property version   "1.10"
+#property version   "1.11"
 #property description "Odebere SL všech pozic v čase odebrání a vrátí je v čase vrácení (čas serveru)."
 #property description "Expert stačí spustit na jednom libovolném grafu, spravuje pozice na všech symbolech."
 
@@ -27,6 +27,7 @@ input bool                InpRestoreOnlyIfEmpty = true;                   // Vr�
 input ENUM_CROSSED_ACTION InpCrossedAction      = CROSSED_CLOSE_POSITION; // Akce, když je cena při vracení za SL
 input int                 InpRetrySeconds       = 10;                     // Interval opakování neúspěšných požadavků (s)
 input int                 InpSlippagePoints     = 30;                     // Max. skluz při zavírání pozice (body)
+input ulong               InpMagic              = 202610142350;           // Magic number uzavíracího obchodu (jen pro identifikaci v historii)
 
 // Stavy uložené pozice
 #define STATUS_PENDING_REMOVE 0  // SL zaznamenán, odebrání ještě nebylo potvrzeno
@@ -569,6 +570,11 @@ int OnInit()
    // Vlastní logování s potlačením opakovaných chyb, CTrade by log zahlcoval
    g_trade.LogLevel(LOG_LEVEL_NO);
    g_trade.SetDeviationInPoints(InpSlippagePoints);
+
+   // Magic se projeví jen u obchodu, kterým expert zavírá pozici (cena za SL).
+   // Úprava SL (TRADE_ACTION_SLTP) magic nepoužívá, pozice si ponechá magic
+   // toho, kdo ji otevřel. Podle magicu se pozice nefiltrují.
+   g_trade.SetExpertMagicNumber(InpMagic);
 
    PrintFormat("PulnockaSL spuštěn: odebrání %s, vrácení %s (čas serveru), načteno %d uložených SL.",
                InpRemoveTime, InpRestoreTime, ArraySize(g_entries));
