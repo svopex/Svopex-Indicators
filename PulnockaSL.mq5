@@ -2,14 +2,17 @@
 //|                                                   PulnockaSL.mq5 |
 //| Dočasné odebrání StopLossů kolem půlnoční svíčky.                |
 //| V čase odebrání (výchozí 23:50 času serveru) odebere SL ze všech |
-//| otevřených pozic na všech instrumentech a v čase vrácení         |
+//| otevřených pozic na forexových párech a v čase vrácení           |
 //| (výchozí 01:00) je vrátí zpět. Stav se ukládá do souboru, takže  |
 //| expert přežije restart experta i celého terminálu.               |
+//| Podporované jsou jen forexové páry z měn USD, EUR, GBP, JPY,     |
+//| CHF, CAD, AUD, NZD. Ostatních instrumentů se expert nedotkne.    |
 //+------------------------------------------------------------------+
 #property copyright "pulnocka"
-#property version   "1.11"
-#property description "Odebere SL všech pozic v čase odebrání a vrátí je v čase vrácení (čas serveru)."
-#property description "Expert stačí spustit na jednom libovolném grafu, spravuje pozice na všech symbolech."
+#property version   "1.12"
+#property description "Odebere SL pozic na forexových párech v čase odebrání a vrátí je v čase vrácení (čas serveru)."
+#property description "Expert stačí spustit na jednom libovolném grafu, spravuje pozice na všech forexových párech."
+#property description "Podporované měny: USD, EUR, GBP, JPY, CHF, CAD, AUD, NZD."
 
 #include <Trade\Trade.mqh>
 
@@ -28,6 +31,9 @@ input ENUM_CROSSED_ACTION InpCrossedAction      = CROSSED_CLOSE_POSITION; // Akc
 input int                 InpRetrySeconds       = 10;                     // Interval opakování neúspěšných požadavků (s)
 input int                 InpSlippagePoints     = 30;                     // Max. skluz při zavírání pozice (body)
 input ulong               InpMagic              = 202610142350;           // Magic number uzavíracího obchodu (jen pro identifikaci v historii)
+
+// Měny, ze kterých se skládají podporované forexové páry
+const string FOREX_CURRENCIES[] = {"USD", "EUR", "GBP", "JPY", "CHF", "CAD", "AUD", "NZD"};
 
 // Stavy uložené pozice
 #define STATUS_PENDING_REMOVE 0  // SL zaznamenán, odebrání ještě nebylo potvrzeno
@@ -89,6 +95,37 @@ bool ParseTimeOfDay(const string text, int &minutes)
 
    minutes = hours * 60 + mins;
    return true;
+  }
+
+//+------------------------------------------------------------------+
+//| Zjistí, zda je měna v seznamu podporovaných forexových měn.      |
+//| currency - kód měny (např. "EUR")                                |
+//+------------------------------------------------------------------+
+bool IsSupportedCurrency(const string currency)
+  {
+   for(int i = 0; i < ArraySize(FOREX_CURRENCIES); i++)
+      if(FOREX_CURRENCIES[i] == currency)
+         return true;
+   return false;
+  }
+
+//+------------------------------------------------------------------+
+//| Zjistí, zda je symbol podporovaný forexový pár.                  |
+//| Rozhoduje se podle bázové a kotované měny symbolu, ne podle      |
+//| názvu, takže fungují i názvy s příponou brokera (EURUSD.m).      |
+//| Pár musí být složen ze dvou různých měn ze seznamu - tím se      |
+//| vyloučí např. kov XAUUSD (XAU není v seznamu) nebo index US30    |
+//| (bázová i kotovaná měna je USD).                                 |
+//| symbol - název symbolu                                           |
+//+------------------------------------------------------------------+
+bool IsForexPair(const string symbol)
+  {
+   string baseCurrency   = SymbolInfoString(symbol, SYMBOL_CURRENCY_BASE);
+   string profitCurrency = SymbolInfoString(symbol, SYMBOL_CURRENCY_PROFIT);
+
+   if(baseCurrency == profitCurrency)
+      return false;
+   return (IsSupportedCurrency(baseCurrency) && IsSupportedCurrency(profitCurrency));
   }
 
 //+------------------------------------------------------------------+
@@ -279,13 +316,15 @@ void LogFailure(const int index, const string action)
   }
 
 //+------------------------------------------------------------------+
-//| Začátek nového okna: zaznamená SL všech otevřených pozic.        |
+//| Začátek nového okna: zaznamená SL otevřených pozic na forexových |
+//| párech. Pozice na ostatních instrumentech se přeskakují.         |
 //| Samotné odebrání provede ProcessPendingRemovals().               |
 //| cycleStart - identifikace okna, uloží se jako zpracované         |
 //+------------------------------------------------------------------+
 void StartRemoval(const datetime cycleStart)
   {
-   int added = 0;
+   int added   = 0;
+   int skipped = 0;
    for(int i = PositionsTotal() - 1; i >= 0; i--)
      {
       ulong ticket = PositionGetTicket(i);
@@ -297,10 +336,19 @@ void StartRemoval(const datetime cycleStart)
       if(sl == 0.0 || FindEntry(ticket) >= 0)
          continue;
 
+      // Mazání SL je podporováno jen pro forexové páry, ostatní instrumenty nechává beze změny
+      string symbol = PositionGetString(POSITION_SYMBOL);
+      if(!IsForexPair(symbol))
+        {
+         PrintFormat("Pozice #%I64u %s není forexový pár, SL se neodebírá.", ticket, symbol);
+         skipped++;
+         continue;
+        }
+
       int n = ArraySize(g_entries);
       ArrayResize(g_entries, n + 1);
       g_entries[n].ticket      = ticket;
-      g_entries[n].symbol      = PositionGetString(POSITION_SYMBOL);
+      g_entries[n].symbol      = symbol;
       g_entries[n].sl          = sl;
       g_entries[n].status      = STATUS_PENDING_REMOVE;
       g_entries[n].lastRetcode = 0;
@@ -321,8 +369,8 @@ void StartRemoval(const datetime cycleStart)
       return;
      }
 
-   PrintFormat("Začátek okna bez SL (%s): zaznamenáno %d pozic se SL.",
-               TimeToString(cycleStart, TIME_DATE | TIME_MINUTES), added);
+   PrintFormat("Začátek okna bez SL (%s): zaznamenáno %d forexových pozic se SL, přeskočeno %d ostatních.",
+               TimeToString(cycleStart, TIME_DATE | TIME_MINUTES), added, skipped);
   }
 
 //+------------------------------------------------------------------+
