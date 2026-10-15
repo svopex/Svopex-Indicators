@@ -24,8 +24,8 @@ enum ENUM_CROSSED_ACTION
    CROSSED_LEAVE_NO_SL    = 1  // Ponechat pozici bez SL
   };
 
-input string              InpRemoveTime         = "23:50";                // Čas odebrání SL (čas serveru, HH:MM)
-input string              InpRestoreTime        = "01:00";                // Čas vrácení SL (čas serveru, HH:MM)
+input string              InpRemoveTime         = "21:55";                // Čas odebrání SL (čas serveru, HH:MM)
+input string              InpRestoreTime        = "23:05";                // Čas vrácení SL (čas serveru, HH:MM)
 input bool                InpRestoreOnlyIfEmpty = true;                   // Vrátit SL jen pokud pozice mezitím nedostala nový SL
 input ENUM_CROSSED_ACTION InpCrossedAction      = CROSSED_CLOSE_POSITION; // Akce, když je cena při vracení za SL
 input int                 InpRetrySeconds       = 10;                     // Interval opakování neúspěšných požadavků (s)
